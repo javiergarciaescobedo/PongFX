@@ -112,144 +112,136 @@ public class App extends Application {
         primaryStage.show();
         
         // Keyboard control
-        scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
-            @Override
-            public void handle(KeyEvent event) {
-                switch(event.getCode()) {
-                    case A: // Player 1 Up
-                        paddle1SpeedY = -PADDLES_DEFAULT_SPEED;
-                        break;
-                    case Z: // Player 1 Down
-                        paddle1SpeedY = PADDLES_DEFAULT_SPEED;
-                        break;
-                    case UP: // Player 2 Up
-                        paddle2SpeedY = -PADDLES_DEFAULT_SPEED;
-                        break;
-                    case DOWN: // Player 2 Down
-                        paddle2SpeedY = PADDLES_DEFAULT_SPEED;
-                        break;
-                }
+        scene.setOnKeyPressed((KeyEvent event) -> {
+            switch(event.getCode()) {
+                case A: // Player 1 Up
+                    paddle1SpeedY = -PADDLES_DEFAULT_SPEED;
+                    break;
+                case Z: // Player 1 Down
+                    paddle1SpeedY = PADDLES_DEFAULT_SPEED;
+                    break;
+                case UP: // Player 2 Up
+                    paddle2SpeedY = -PADDLES_DEFAULT_SPEED;
+                    break;
+                case DOWN: // Player 2 Down
+                    paddle2SpeedY = PADDLES_DEFAULT_SPEED;
+                    break;
             }
         });
         
         // Game loop
         Timeline timeline = new Timeline(
             // 0.017 seconds ~= 60 FPS
-            new KeyFrame(Duration.seconds(0.017), new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent ae) {
-
-                    // Paddle1 new position
-                    paddle1.setTranslateY(paddle1.getTranslateY() + paddle1SpeedY);
-                    // Check if paddle 1 is out of bounds
-                    if(paddle1.getTranslateY() <= 0) {
-                        // Paddle 1 is out of upper bound. Stopping paddle 1
-                        paddle1.setTranslateY(0);
+            new KeyFrame(Duration.seconds(0.017), (ActionEvent ae) -> {
+                // Paddle1 new position
+                paddle1.setTranslateY(paddle1.getTranslateY() + paddle1SpeedY);
+                // Check if paddle 1 is out of bounds
+                if(paddle1.getTranslateY() <= 0) {
+                    // Paddle 1 is out of upper bound. Stopping paddle 1
+                    paddle1.setTranslateY(0);
+                    paddle1SpeedY = 0;
+                } else {
+                    if(paddle1.getTranslateY() + PADDLE_HEIGHT >= WORLD_HEIGHT) {
+                        // Paddle 1 is out of lower bound. Stopping paddle 1
+                        paddle1.setTranslateY(WORLD_HEIGHT - PADDLE_HEIGHT - 1);
                         paddle1SpeedY = 0;
-                    } else {
-                        if(paddle1.getTranslateY() + PADDLE_HEIGHT >= WORLD_HEIGHT) {
-                            // Paddle 1 is out of lower bound. Stopping paddle 1
-                            paddle1.setTranslateY(WORLD_HEIGHT - PADDLE_HEIGHT - 1);
-                            paddle1SpeedY = 0;
-                        }
                     }
-
-                    // Paddle2 new position                    
-                    paddle2.setTranslateY(paddle2.getTranslateY() + paddle2SpeedY);
-                    // Check if paddle 1 is out of bounds
-                    if(paddle2.getTranslateY() <= 0) {
-                        // Paddle 2 is out of upper bound. Stopping paddle 2
-                        paddle2.setTranslateY(0);
-                        paddle2SpeedY = 0;
-                    } else {
-                        if(paddle2.getTranslateY() + PADDLE_HEIGHT >= WORLD_HEIGHT) {
-                            // Paddle 2 is out of lower bound. Stopping paddle 2
-                            paddle2.setTranslateY(WORLD_HEIGHT - PADDLE_HEIGHT - 1);
-                            paddle2SpeedY = 0;
-                        }
-                    }
-
-                    // Animate ball
-                    ball.setTranslateX(ball.getTranslateX() + ballSpeedX);
-                    ball.setTranslateY(ball.getTranslateY() + ballSpeedY);
-
-                    byte contactZone = -1;
-                    // Check ball collision with paddle1
-                    if(ball.getTranslateX() - BALL_RADIUS >= PADDLE1_POSX && 
-                            ball.getTranslateX() - BALL_RADIUS < PADDLE1_POSX + PADDLE_WIDTH && 
-                            ball.getTranslateY() >= paddle1.getTranslateY() && 
-                            ball.getTranslateY() <= paddle1.getTranslateY() + PADDLE_HEIGHT) {
-                        // Change ball direction to right
-                        ballSpeedX = BALL_DEFAULT_SPEED;
-                        // Detect contact zone in paddle1
-                        contactZone = (byte)((ball.getTranslateY() - paddle1.getTranslateY()) / (PADDLE_HEIGHT / 5));
-                    } 
-
-                    // Check ball collision with paddle2
-                    if(ball.getTranslateX() + BALL_RADIUS >= PADDLE2_POSX && 
-                            ball.getTranslateX() + BALL_RADIUS < PADDLE2_POSX + PADDLE_WIDTH && 
-                            ball.getTranslateY() >= paddle2.getTranslateY() && 
-                            ball.getTranslateY() <= paddle2.getTranslateY() + PADDLE_HEIGHT) {
-                        // Change ball direction to left
-                        ballSpeedX = -BALL_DEFAULT_SPEED;
-                        // Detect contact zone in paddle2
-                        contactZone = (byte)((ball.getTranslateY() - paddle2.getTranslateY()) / (PADDLE_HEIGHT / 5));
-                    } 
-                    
-                    // Change ball speed Y if touched in some paddle
-                    if(contactZone != -1) {
-                        switch(contactZone) {
-                            case 0: // Upper area
-                                ballSpeedY = BALL_DEFAULT_SPEED * -1.5f;
-                                break;
-                            case 1: // Upper-middle area
-                                ballSpeedY = BALL_DEFAULT_SPEED * -1.25f;
-                                break;
-                            case 2: // Middle area
-                                ballSpeedY = BALL_DEFAULT_SPEED;
-                                break;
-                            case 3: // Lower-middle area
-                                ballSpeedY = BALL_DEFAULT_SPEED * 1.25f;
-                                break;
-                            case 4: // Lower area
-                                ballSpeedY = BALL_DEFAULT_SPEED * 1.5f;
-                                break;                                
-                        }
-                        contactZone = -1;
-                    }
-
-                        // Test if ball is out RIGHT border
-                    if(ball.getTranslateX() - BALL_RADIUS <= 0) {
-                        // Move the ball to center
-                        ball.setTranslateX(WORLD_WIDTH * 0.5f);
-                        ball.setTranslateY(WORLD_HEIGHT * 0.5f);
-                        ballSpeedX = BALL_DEFAULT_SPEED;
-                        ballSpeedY = BALL_DEFAULT_SPEED;
-                        // Increase player 2 score
-                        score2++;
-                        labelScore2.setText(String.valueOf(score2));
-                    }
-
-                    // Test if ball is out LEFT border
-                    if(ball.getTranslateX() + BALL_RADIUS >= WORLD_WIDTH - 1) {
-                        // Move the ball to center
-                        ball.setTranslateX(WORLD_WIDTH * 0.5f);
-                        ball.setTranslateY(WORLD_HEIGHT * 0.5f);
-                        ballSpeedX = -BALL_DEFAULT_SPEED;
-                        ballSpeedY = BALL_DEFAULT_SPEED;
-                        // Increase player 1 score
-                        score1++;
-                        labelScore1.setText(String.valueOf(score1));
-                    }                    
-
-                    // Bounding ball upper or bottom bounds
-                    if(ball.getTranslateY() <= 0 || 
-                            ball.getTranslateY() >= WORLD_HEIGHT - 1) {
-                        ballSpeedY *= -1;
-                    }
-
                 }
-            })
+                
+                // Paddle2 new position
+                paddle2.setTranslateY(paddle2.getTranslateY() + paddle2SpeedY);
+                // Check if paddle 1 is out of bounds
+                if(paddle2.getTranslateY() <= 0) {
+                    // Paddle 2 is out of upper bound. Stopping paddle 2
+                    paddle2.setTranslateY(0);
+                    paddle2SpeedY = 0;
+                } else {
+                    if(paddle2.getTranslateY() + PADDLE_HEIGHT >= WORLD_HEIGHT) {
+                        // Paddle 2 is out of lower bound. Stopping paddle 2
+                        paddle2.setTranslateY(WORLD_HEIGHT - PADDLE_HEIGHT - 1);
+                        paddle2SpeedY = 0;
+                    }
+                }
+                
+                // Animate ball
+                ball.setTranslateX(ball.getTranslateX() + ballSpeedX);
+                ball.setTranslateY(ball.getTranslateY() + ballSpeedY);
+                
+                byte contactZone = -1;
+                // Check ball collision with paddle1
+                if(ball.getTranslateX() - BALL_RADIUS >= PADDLE1_POSX &&
+                        ball.getTranslateX() - BALL_RADIUS < PADDLE1_POSX + PADDLE_WIDTH &&
+                        ball.getTranslateY() >= paddle1.getTranslateY() &&
+                        ball.getTranslateY() <= paddle1.getTranslateY() + PADDLE_HEIGHT) {
+                    // Change ball direction to right
+                    ballSpeedX = BALL_DEFAULT_SPEED;
+                    // Detect contact zone in paddle1
+                    contactZone = (byte)((ball.getTranslateY() - paddle1.getTranslateY()) / (PADDLE_HEIGHT / 5));
+                }
+                
+                // Check ball collision with paddle2
+                if(ball.getTranslateX() + BALL_RADIUS >= PADDLE2_POSX &&
+                        ball.getTranslateX() + BALL_RADIUS < PADDLE2_POSX + PADDLE_WIDTH &&
+                        ball.getTranslateY() >= paddle2.getTranslateY() &&
+                        ball.getTranslateY() <= paddle2.getTranslateY() + PADDLE_HEIGHT) {
+                    // Change ball direction to left
+                    ballSpeedX = -BALL_DEFAULT_SPEED;
+                    // Detect contact zone in paddle2
+                    contactZone = (byte)((ball.getTranslateY() - paddle2.getTranslateY()) / (PADDLE_HEIGHT / 5));
+                }
+                
+                // Change ball speed Y if touched in some paddle
+                if(contactZone != -1) {
+                    switch(contactZone) {
+                        case 0: // Upper area
+                            ballSpeedY = BALL_DEFAULT_SPEED * -1.5f;
+                            break;
+                        case 1: // Upper-middle area
+                            ballSpeedY = BALL_DEFAULT_SPEED * -1.25f;
+                            break;
+                        case 2: // Middle area
+                            ballSpeedY = BALL_DEFAULT_SPEED;
+                            break;
+                        case 3: // Lower-middle area
+                            ballSpeedY = BALL_DEFAULT_SPEED * 1.25f;
+                            break;
+                        case 4: // Lower area
+                            ballSpeedY = BALL_DEFAULT_SPEED * 1.5f;
+                            break;
+                    }
+                    contactZone = -1;
+                }
+                
+                // Test if ball is out RIGHT border
+                if(ball.getTranslateX() - BALL_RADIUS <= 0) {
+                    // Move the ball to center
+                    ball.setTranslateX(WORLD_WIDTH * 0.5f);
+                    ball.setTranslateY(WORLD_HEIGHT * 0.5f);
+                    ballSpeedX = BALL_DEFAULT_SPEED;
+                    ballSpeedY = BALL_DEFAULT_SPEED;
+                    // Increase player 2 score
+                    score2++;
+                    labelScore2.setText(String.valueOf(score2));
+                }
+                
+                // Test if ball is out LEFT border
+                if(ball.getTranslateX() + BALL_RADIUS >= WORLD_WIDTH - 1) {
+                    // Move the ball to center
+                    ball.setTranslateX(WORLD_WIDTH * 0.5f);
+                    ball.setTranslateY(WORLD_HEIGHT * 0.5f);
+                    ballSpeedX = -BALL_DEFAULT_SPEED;
+                    ballSpeedY = BALL_DEFAULT_SPEED;
+                    // Increase player 1 score
+                    score1++;
+                    labelScore1.setText(String.valueOf(score1));
+                }
+                
+                // Bounding ball upper or bottom bounds
+                if(ball.getTranslateY() <= 0 ||
+                        ball.getTranslateY() >= WORLD_HEIGHT - 1) {
+                    ballSpeedY *= -1;
+                }
+        })
         );
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
